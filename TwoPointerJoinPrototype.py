@@ -1,7 +1,49 @@
 import numpy as np
 import pandas as pd
 
-def iterate_until_not_with_keys(right_df, left_row, i, j, last_join_checked, condition_join_below, condition_join_above, right_inner_rows, left_inner_rows):
+def keys_sorted_ordered_join(left_df, right_df, condition_left_below, condition_right_below, right_on, left_on):
+
+    def process_inner_rows(left_row_number, right_inner_rows, left_inner_rows, new_start):
+        right_row_number = 0
+        while right_row_number < len(right_df):
+            right_row_number += 1
+            if not join_below_condition(left_df[left_row_number], right_df[right_row_number]):
+                new_start = right_row_number
+                continue
+            if not join_above_condition(left_df[left_row_number], right_df[right_row_number]):
+                break
+            right_inner_rows[right_row_number] = True
+            left_inner_rows[left_row_number] = True
+            if not condition_left_below(left_df[left_row_number], right_df[right_row_number]):
+                new_start = right_row_number
+                continue
+            if not condition_right_below(left_df[left_row_number], right_df[right_row_number]):
+                break
+        return new_start
+
+    def process_outer_rows(left_row_number, right_inner_rows, left_inner_rows, last_outer_checked):
+        for right_row_number in range(last_outer_checked, len(right_df)):
+            last_outer_checked += 1
+            if not join_below_condition(left_df[left_row_number], right_df[right_row_number]):
+                continue
+            if not join_above_condition(left_df[left_row_number], right_df[right_row_number]):
+                break
+            right_inner_rows[right_row_number] = True
+            left_inner_rows[left_row_number] = True
+        return last_outer_checked
+
+    left_inner_rows = np.full(len(left_df), False, dtype=bool)
+    right_inner_rows = np.full(len(right_df), False, dtype=bool)
+
+    new_start = 0
+    last_outer_checked = 0
+    for left_row_number in range(len(left_df)):
+        new_start = process_inner_rows(left_row_number, right_inner_rows, left_inner_rows, new_start)
+        last_outer_checked = process_outer_rows(left_row_number, right_inner_rows, left_inner_rows, last_outer_checked)
+
+    return new_start
+
+def iterate_until_not_with_keys(right_df, left_row, i, j, condition_join_below, condition_join_above, right_inner_rows, left_inner_rows):
     new_start = j
     row_number = j
     while row_number < range(j, len(right_df)):
@@ -127,3 +169,60 @@ def check_left_columns(left_df, right_df, condition_left_below, condition_right_
         if condition_left_below(row, right_nan_row) and condition_right_below(row, right_nan_row):
             result.append(row)
     return pd.DataFrame(result).drop(columns=right_on)
+
+
+
+# def keys_sorted_ordered_join(left_df, right_df, condition_left_below, condition_right_below, right_on, left_on):
+#    def join_below_condition(x, y):
+#        # Extract field values directly without looping
+#        x_keys = np.array(x[left_on].tolist())
+#        y_keys = np.array(y[right_on].tolist())
+#        return np.all(x_keys <= y_keys)
+#
+#    def join_above_condition(x, y):
+#        # Extract field values directly
+#        x_keys = np.array(x[left_on].tolist())
+#        y_keys = np.array(y[right_on].tolist())
+#        return np.all(x_keys >= y_keys)
+#
+#    left_inner_rows = np.full(len(left_df), False, dtype=bool)
+#    right_inner_rows = np.full(len(right_df), False, dtype=bool)
+#
+#    new_start = 0
+#    last_outer_checked = 0
+#    for left_row_number in range(len(left_df)):
+#
+#        right_row_number = 0
+#        while right_row_number < range(j, len(right_df)):
+#            right_row_number += 1
+#
+#            if not join_below_condition(left_df[left_row_number], right_df[right_row_number]):
+#                new_start = right_row_number
+#                continue
+#            if not join_above_condition(left_df[left_row_number], right_df[right_row_number]):
+#                break
+#
+#            right_inner_rows[right_row_number] = True
+#            left_inner_rows[left_row_number] = True
+#
+#            if not condition_left_below(left_df[left_row_number], right_df[right_row_number]):
+#                new_start = right_row_number
+#                continue
+#
+#            if not condition_right_below(left_df[left_row_number], right_df[right_row_number]):
+#                break
+#             #addRow
+#
+#        for right_row_number in range(last_outer_checked, len(right_df)):
+#            last_outer_checked += 1
+#            if not join_below_condition(left_df[left_row_number], right_df[right_row_number]):
+#                continue
+#            if not join_above_condition(left_df[left_row_number], right_df[right_row_number]):
+#                break
+#
+#            right_inner_rows[right_row_number] = True
+#            left_inner_rows[left_row_number] = True
+#
+#        return last_outer_checked
+#
+#    return new_start
