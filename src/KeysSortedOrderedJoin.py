@@ -1,6 +1,6 @@
 import numpy as np
 
-from OrderedJoin import OrderedJoin
+from AbstractOrderedJoin import OrderedJoin
 
 
 class KeysSortedOrderedJoin(OrderedJoin):
@@ -44,6 +44,9 @@ class KeysSortedOrderedJoin(OrderedJoin):
         y_keys = np.array(y[self.right_on].tolist())
         return np.all(x_keys >= y_keys)
 
-    def get_outer(self):
-        self.outer_right = self.check_outer_right_columns(self.right_np[~self.right_inner_rows])
-        self.outer_left = self.check_outer_left_columns(self.left_np[~self.left_inner_rows])
+    def determine_outer(self):
+        self.outer_left_to_check = self.left_np[~self.left_inner_rows]
+        self.outer_right_to_check = self.right_np[~self.right_inner_rows]
+
+        self.outer_right = self.check_outer_right_columns()
+        self.outer_left = self.check_outer_left_columns()

@@ -1,4 +1,4 @@
-from OrderedJoin import OrderedJoin
+from AbstractOrderedJoin import OrderedJoin
 
 
 class KeysUnsortedOrderedJoin(OrderedJoin):
@@ -17,10 +17,12 @@ class KeysUnsortedOrderedJoin(OrderedJoin):
 
             self.new_concat_rows_numpy(self.left_np[self.current_left_row], self.right_np[current_right_row])
 
-    def get_outer(self):
+    def determine_outer(self):
+        self.outer_right_to_check = self.right_np
+        self.outer_left_to_check = self.left_np
 
-        right_result = self.check_outer_right_columns(self.right_np)
-        left_result = self.check_outer_left_columns(self.left_np)
+        right_result = self.check_outer_right_columns()
+        left_result = self.check_outer_left_columns()
 
         self.outer_right = right_result[~right_result[self.left_on].isin(self.left_np[self.left_on])]
         self.outer_left = left_result[~left_result[self.right_on].isin(self.right_np[self.left_on])]
